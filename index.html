@@ -262,15 +262,11 @@
                         <button id="download-strip2-button" class="mario-button text-sm px-4 py-2 rounded-lg hidden">Unduh Strip 2</button>
                         <button id="download-all-button" class="mario-button text-sm px-4 py-2 rounded-lg hidden">Unduh Semua</button>
                     </div>
+                    <div class="flex flex-wrap justify-center items-center gap-4 mt-6">
+                        <button id="change-frame-button" class="mario-button text-sm px-4 py-2 rounded-lg">Ganti Frame</button>
+                        <button id="retake-button" class="mario-button text-sm px-4 py-2 rounded-lg">Ulangi Sesi</button>
+                    </div>
                 </div>
-            </div>
-
-            <hr class="mario-divider my-12">
-            
-            <!-- General Actions -->
-            <div class="flex flex-wrap justify-center items-center gap-4">
-                <button id="retake-button" class="mario-button text-base px-6 py-3 rounded-lg">Ulangi</button>
-                <button id="change-frame-button" class="mario-button text-base px-6 py-3 rounded-lg">Ganti Frame</button>
             </div>
         </div>
     </div>
@@ -541,7 +537,6 @@
             captureCanvas.width = PHOTO_WIDTH;
             captureCanvas.height = PHOTO_HEIGHT;
             
-            // --- CROP LOGIC TO PREVENT STRETCHING ---
             const videoWidth = video.videoWidth;
             const videoHeight = video.videoHeight;
             const videoRatio = videoWidth / videoHeight;
@@ -549,10 +544,10 @@
 
             let sx = 0, sy = 0, sWidth = videoWidth, sHeight = videoHeight;
 
-            if (videoRatio > canvasRatio) { // Video is wider than canvas
+            if (videoRatio > canvasRatio) { 
                 sWidth = videoHeight * canvasRatio;
                 sx = (videoWidth - sWidth) / 2;
-            } else { // Video is taller than canvas
+            } else { 
                 sHeight = videoWidth / canvasRatio;
                 sy = (videoHeight - sHeight) / 2;
             }
@@ -561,13 +556,13 @@
             context.scale(-1, 1);
             context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, PHOTO_WIDTH, PHOTO_HEIGHT);
             const dataUrl = captureCanvas.toDataURL('image/jpeg');
-            context.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+            context.setTransform(1, 0, 0, 1, 0, 0); 
             return dataUrl;
         }
 
         // Review Screen Logic
         function showReviewScreen() {
-            stopCamera(); // Turn off camera after finishing session
+            stopCamera(); 
             showScreen(reviewScreen);
             
             const gallery = document.getElementById('review-gallery');
