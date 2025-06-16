@@ -505,11 +505,27 @@
             captureCanvas.width = PHOTO_WIDTH;
             captureCanvas.height = PHOTO_HEIGHT;
             
+            // --- CROP LOGIC TO PREVENT STRETCHING ---
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            const videoRatio = videoWidth / videoHeight;
+            const canvasRatio = PHOTO_WIDTH / PHOTO_HEIGHT;
+
+            let sx = 0, sy = 0, sWidth = videoWidth, sHeight = videoHeight;
+
+            if (videoRatio > canvasRatio) { // Video is wider than canvas
+                sWidth = videoHeight * canvasRatio;
+                sx = (videoWidth - sWidth) / 2;
+            } else { // Video is taller than canvas
+                sHeight = videoWidth / canvasRatio;
+                sy = (videoHeight - sHeight) / 2;
+            }
+            
             context.translate(PHOTO_WIDTH, 0);
             context.scale(-1, 1);
-            context.drawImage(video, 0, 0, PHOTO_WIDTH, PHOTO_HEIGHT);
+            context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, PHOTO_WIDTH, PHOTO_HEIGHT);
             const dataUrl = captureCanvas.toDataURL('image/jpeg');
-            context.setTransform(1, 0, 0, 1, 0, 0);
+            context.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
             return dataUrl;
         }
 
