@@ -176,6 +176,23 @@
             border-radius: 50%;
             z-index: 50;
         }
+        
+        .site-footer {
+            margin-top: 4rem;
+            padding: 1rem;
+            color: white;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .footer-link {
+            color: #fbd000;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .footer-link:hover {
+            color: #ffffff;
+        }
 
     </style>
 </head>
@@ -259,6 +276,13 @@
         </div>
     </div>
     
+    <footer class="site-footer text-center">
+        <p class="text-xs">Created by Sultan Sahal Alrasit</p>
+        <a href="https://www.instagram.com/beneransultan_/" target="_blank" rel="noopener noreferrer" class="footer-link text-xs inline-block mt-1">
+            Follow on Instagram
+        </a>
+    </footer>
+
     <canvas id="capture-canvas" class="hidden"></canvas>
     
     <script>
