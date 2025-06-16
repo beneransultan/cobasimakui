@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sura Sura Photobooth - Mario Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #e70000; /* Mario Red Background */
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #000000;
+            overflow-x: hidden;
+        }
+
+        .mario-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.8rem; /* Adjusted for mobile */
+            color: #ffffff; /* White text for contrast on red */
+            text-shadow: 2px 2px 0px #000, 4px 4px 0px #fbd000; /* Black and Yellow shadow */
+            transform: rotate(-2deg);
+            display: inline-block;
+        }
+        
+        @media (min-width: 640px) {
+            .mario-title {
+                font-size: 2.5rem;
+                text-shadow: 3px 3px 0px #000, 6px 6px 0px #fbd000;
+            }
+        }
+        
+        .mario-title span {
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .mario-button {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #fbd000; /* Mario Yellow */
+            color: #000000; /* Black text for contrast */
+            border: 4px solid #000000;
+            box-shadow: 0 6px #e67e22; /* Darker yellow/orange shadow */
+            transition: all 0.1s ease-in-out;
+            cursor: pointer;
+        }
+
+        .mario-button:hover {
+            background-color: #fde047; /* Lighter Yellow */
+        }
+        
+        .mario-button:active, .filter-btn.active {
+            box-shadow: 0 2px #e67e22;
+            transform: translateY(4px);
+        }
+        
+        .mario-button:disabled {
+            background-color: #a0a0a0;
+            box-shadow: 0 6px #6b6b6b;
+            border-color: #d1d1d1;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .video-container {
+            border: 10px solid #42b842; /* Mario Pipe Green */
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.5), inset 0 0 15px rgba(0,0,0,0.3);
+            background-color: #000;
+            max-width: 100%;
+        }
+
+        .photostrip {
+            box-shadow: 8px 8px 10px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px;
+        }
+        
+        .photostrip-img-container {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        .photostrip-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: filter 0.3s ease;
+        }
+
+        .strip-logo {
+            font-family: 'Pacifico', cursive;
+            font-size: 24px;
+            text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+        }
+
+        #countdown {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 15vw;
+            color: #fbd000;
+            text-shadow: 5px 5px 0px #000, -5px -5px 0px #42b842;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            pointer-events: none;
+        }
+        
+        #flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            opacity: 0;
+            z-index: 30;
+            pointer-events: none;
+            transition: opacity 0.1s ease-out;
+        }
+        
+        .frame-choice {
+            width: 50px;
+            height: 50px;
+            border: 4px solid white;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border-radius: 50%;
+        }
+        .frame-choice:hover {
+            transform: scale(1.1) translateY(-5px);
+        }
+        
+        input[type="color"] {
+            -webkit-appearance: none;
+            width: 50px;
+            height: 50px;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: 4px solid white;
+            border-radius: 50%;
+        }
+        
+        hr.mario-divider {
+            border: none;
+            height: 10px;
+            background: linear-gradient(90deg, transparent, #42b842, #fbd000, #42b842, transparent);
+            margin: 2rem 0;
+        }
+        
+        /* Particle Animations */
+        .particle {
+            position: absolute;
+            background-color: #fbd000;
+            border-radius: 50%;
+            z-index: 50;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div id="flash"></div>
+    <div class="w-full max-w-6xl mx-auto text-center py-8">
+
+        <!-- Initial State -->
+        <div id="initial-screen" class="flex flex-col items-center justify-center min-h-[80vh]">
+            <h1 id="main-title" class="mario-title mb-4">Sura Sura</h1>
+            <p class="text-xl sm:text-2xl mb-8">It's-a-me, Photobooth!</p>
+            <button id="start-button" class="mario-button text-lg sm:text-xl px-8 sm:px-10 py-4 sm:py-5 rounded-xl">START</button>
+            <p id="error-msg" class="mt-4 text-red-400 text-lg"></p>
+        </div>
+        
+        <!-- Session Selection State -->
+        <div id="session-selection-screen" class="hidden">
+            <h2 class="text-2xl sm:text-4xl font-bold mb-8">Pilih Level Kamu</h2>
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-6">
+                <button id="one-strip-button" class="mario-button text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-xl">1-UP (4 FOTO)</button>
+                <button id="two-strips-button" class="mario-button text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-xl">2-UP (8 FOTO)</button>
+            </div>
+        </div>
+
+        <!-- Photobooth State -->
+        <div id="photobooth-screen" class="hidden">
+            <div id="video-wrapper" class="relative inline-block video-container">
+                <video id="video" width="640" height="480" autoplay playsinline class="rounded-sm scale-x-[-1]"></video>
+                <div id="countdown" class="hidden"></div>
+                 <div id="photo-counter" class="absolute bottom-2 right-4 text-3xl font-bold">0/0</div>
+            </div>
+            <p id="instruction" class="text-xl sm:text-3xl mt-4">Get Ready!</p>
+        </div>
+
+        <!-- Review Photos State -->
+        <div id="review-screen" class="hidden">
+            <h2 class="text-2xl sm:text-4xl font-bold mb-6">Review Your Power-Ups!</h2>
+            <div id="review-gallery" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <!-- Photos for review will be generated here -->
+            </div>
+            <button id="continue-to-frame-button" class="mario-button text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-xl">Let's-a-Go!</button>
+        </div>
+
+        <!-- Frame Selection State -->
+        <div id="frame-selection-state" class="hidden">
+            <h2 class="text-2xl sm:text-4xl font-bold mb-6">Pilih Warna Frame</h2>
+            <div id="frame-choices-container" class="relative flex flex-wrap justify-center items-center gap-6">
+                 <!-- The color choices are generated by JS now -->
+            </div>
+        </div>
+
+        <!-- Result State -->
+        <div id="result-screen" class="hidden">
+             <h2 class="text-2xl sm:text-4xl font-bold mb-6">Here We Go!</h2>
+            <div id="result-layout-container" class="flex flex-col lg:flex-row items-center justify-center gap-8 w-full">
+                <div id="strips-wrapper" class="flex flex-col md:flex-row justify-center items-start gap-8">
+                    <div id="photostrip1-container" class="photostrip w-[200px] md:w-[220px] rounded-lg"></div>
+                    <div id="photostrip2-container" class="photostrip w-[200px] md:w-[220px] rounded-lg hidden"></div>
+                </div>
+                <div id="actions-wrapper" class="flex flex-col items-center gap-6 mt-4 lg:mt-0 lg:pl-8">
+                     <div id="filter-selection" class="flex justify-center items-center gap-4">
+                         <button data-filter="none" class="filter-btn mario-button text-sm px-4 py-2 rounded-lg active">Normal</button>
+                         <button data-filter="vintage" class="filter-btn mario-button text-sm px-4 py-2 rounded-lg">Retro</button>
+                         <button data-filter="bw" class="filter-btn mario-button text-sm px-4 py-2 rounded-lg">B&W</button>
+                    </div>
+                    <div class="flex flex-col gap-4 mt-4">
+                        <button id="download-strip1-button" class="mario-button text-sm px-4 py-2 rounded-lg">Unduh Strip 1</button>
+                        <button id="download-strip2-button" class="mario-button text-sm px-4 py-2 rounded-lg hidden">Unduh Strip 2</button>
+                        <button id="download-all-button" class="mario-button text-sm px-4 py-2 rounded-lg hidden">Unduh Semua</button>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="mario-divider my-12">
+            
+            <!-- General Actions -->
+            <div class="flex flex-wrap justify-center items-center gap-4">
+                <button id="retake-button" class="mario-button text-base px-6 py-3 rounded-lg">Ulangi</button>
+                <button id="change-frame-button" class="mario-button text-base px-6 py-3 rounded-lg">Ganti Frame</button>
+            </div>
+        </div>
+    </div>
+    
+    <canvas id="capture-canvas" class="hidden"></canvas>
+    
+    <script>
+        // DOM Elements
+        const initialScreen = document.getElementById('initial-screen');
+        const sessionSelectionScreen = document.getElementById('session-selection-screen');
+        const photoboothScreen = document.getElementById('photobooth-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const frameSelectionScreen = document.getElementById('frame-selection-state');
+        const resultScreen = document.getElementById('result-screen');
+        
+        const startButton = document.getElementById('start-button');
+        const oneStripButton = document.getElementById('one-strip-button');
+        const twoStripsButton = document.getElementById('two-strips-button');
+        const continueToFrameButton = document.getElementById('continue-to-frame-button');
+
+        const retakeButton = document.getElementById('retake-button');
+        const changeFrameButton = document.getElementById('change-frame-button');
+        const downloadStrip1Button = document.getElementById('download-strip1-button');
+        const downloadStrip2Button = document.getElementById('download-strip2-button');
+        const downloadAllButton = document.getElementById('download-all-button');
+        
+        const resultLayoutContainer = document.getElementById('result-layout-container');
+
+        const video = document.getElementById('video');
+        const countdownEl = document.getElementById('countdown');
+        const photoCounterEl = document.getElementById('photo-counter');
+        const instructionEl = document.getElementById('instruction');
+        const errorMsgEl = document.getElementById('error-msg');
+        const flashEl = document.getElementById('flash');
+        const captureCanvas = document.getElementById('capture-canvas');
+        const mainTitle = document.getElementById('main-title');
+
+        // State
+        let stream;
+        let capturedPhotos = [];
+        let selectedFrameColor = '#F5F5DC';
+        let currentFilter = 'none';
+        let totalPhotosInSession = 0;
+        const PHOTO_WIDTH = 640; 
+        const PHOTO_HEIGHT = 480;
+
+        // Audio Context for sounds
+        let audioCtx;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        function playCoinSound() {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(987.77, audioCtx.currentTime); // B5
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+
+            setTimeout(() => {
+                 oscillator.frequency.setValueAtTime(1318.51, audioCtx.currentTime); // E6
+            }, 50);
+
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+        
+        function playJumpSound() {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+            oscillator.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.15);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.15);
+        }
+        
+        // --- JS Animations ---
+        function animateTitle() {
+            const text = mainTitle.textContent;
+            mainTitle.textContent = '';
+            text.split('').forEach(char => {
+                const span = document.createElement('span');
+                if (char === ' ') {
+                    span.innerHTML = '&nbsp;';
+                } else {
+                    span.textContent = char;
+                }
+                mainTitle.appendChild(span);
+            });
+
+            Array.from(mainTitle.children).forEach((span, index) => {
+                span.addEventListener('mouseover', () => {
+                     span.style.transform = 'translateY(-10px) rotate(5deg)';
+                     playCoinSound();
+                });
+                 span.addEventListener('mouseout', () => {
+                     span.style.transform = 'translateY(0px) rotate(0deg)';
+                });
+            });
+        }
+        
+        function createParticles(x, y) {
+            const parent = document.getElementById('video-wrapper');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                parent.appendChild(particle);
+
+                const size = Math.random() * 8 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                const angle = Math.random() * 360;
+                const distance = Math.random() * 80 + 50;
+                
+                const initialX = x;
+                const initialY = y;
+                
+                particle.style.left = `${initialX}px`;
+                particle.style.top = `${initialY}px`;
+                
+                setTimeout(() => {
+                    particle.style.transition = 'all 0.5s ease-out';
+                    particle.style.transform = `translate(${Math.cos(angle * Math.PI / 180) * distance}px, ${Math.sin(angle * Math.PI / 180) * distance}px) scale(0)`;
+                    particle.style.opacity = '0';
+                }, 10);
+                
+                setTimeout(() => particle.remove(), 600);
+            }
+        }
+        
+        // Initialize camera
+        async function initCamera() {
+             if (stream) return true;
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                     throw new Error('Fitur kamera tidak didukung di browser ini.');
+                }
+                const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                video.srcObject = newStream;
+                await video.play();
+                stream = newStream;
+                return true;
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                    errorMsgEl.textContent = "Kamu perlu mengizinkan akses kamera untuk melanjutkan.";
+                } else {
+                     errorMsgEl.textContent = `Oops! Gagal mengakses kamera. (${err.name})`;
+                }
+                startButton.disabled = true;
+                return false;
+            }
+        }
+        
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+
+        function showScreen(screen) {
+            [initialScreen, sessionSelectionScreen, photoboothScreen, reviewScreen, frameSelectionScreen, resultScreen].forEach(s => s.classList.add('hidden'));
+            screen.classList.remove('hidden');
+        }
+
+        // Start button leads to session selection
+        startButton.addEventListener('click', async () => {
+            initAudio(); 
+            const cameraReady = await initCamera();
+            if (cameraReady) {
+                playCoinSound();
+                showScreen(sessionSelectionScreen);
+            }
+        });
+
+        // Session selection buttons
+        oneStripButton.addEventListener('click', () => startPhotoSession(4));
+        twoStripsButton.addEventListener('click', () => startPhotoSession(8));
+
+        // Photo session logic
+        async function startPhotoSession(photoCount) {
+            totalPhotosInSession = photoCount;
+            capturedPhotos = [];
+            
+            await initCamera(); 
+            showScreen(photoboothScreen);
+
+            for (let i = 1; i <= totalPhotosInSession; i++) {
+                photoCounterEl.textContent = `${i-1}/${totalPhotosInSession}`;
+                instructionEl.textContent = `Foto ke-${i}. Siap-siap...`;
+                await runCountdown(3);
+                capturedPhotos.push(captureSinglePhoto());
+                photoCounterEl.textContent = `${i}/${totalPhotosInSession}`;
+            }
+            instructionEl.textContent = "Great!";
+            await delay(1000);
+            showReviewScreen();
+        }
+
+        // Countdown timer
+        function runCountdown(seconds) {
+            return new Promise(resolve => {
+                countdownEl.classList.remove('hidden');
+                let count = seconds;
+                
+                const interval = setInterval(() => {
+                    if (count > 0) {
+                        countdownEl.textContent = count;
+                        playCoinSound();
+                        count--;
+                    } else {
+                        clearInterval(interval);
+                        countdownEl.classList.add('hidden');
+                        resolve();
+                    }
+                }, 1000);
+            });
+        }
+        
+        function triggerFlash() {
+            flashEl.style.opacity = '0.8';
+            setTimeout(() => {
+                flashEl.style.opacity = '0';
+            }, 150);
+        }
+
+        function captureSinglePhoto() {
+            playJumpSound();
+            triggerFlash();
+            const rect = video.getBoundingClientRect();
+            createParticles(rect.width/2, rect.height/2);
+            
+            const context = captureCanvas.getContext('2d');
+            captureCanvas.width = PHOTO_WIDTH;
+            captureCanvas.height = PHOTO_HEIGHT;
+            
+            context.translate(PHOTO_WIDTH, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, PHOTO_WIDTH, PHOTO_HEIGHT);
+            const dataUrl = captureCanvas.toDataURL('image/jpeg');
+            context.setTransform(1, 0, 0, 1, 0, 0);
+            return dataUrl;
+        }
+
+        // Review Screen Logic
+        function showReviewScreen() {
+            stopCamera(); // Turn off camera after finishing session
+            showScreen(reviewScreen);
+            
+            const gallery = document.getElementById('review-gallery');
+            gallery.innerHTML = '';
+
+            capturedPhotos.forEach((photoSrc, index) => {
+                const photoContainer = document.createElement('div');
+                photoContainer.className = 'relative group';
+
+                const img = document.createElement('img');
+                img.src = photoSrc;
+                img.className = 'w-full rounded-lg shadow-lg';
+                
+                const retakeBtn = document.createElement('button');
+                retakeBtn.textContent = 'Ulangi';
+                retakeBtn.className = 'absolute bottom-2 left-1/2 -translate-x-1/2 mario-button text-xs px-3 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity';
+                retakeBtn.onclick = () => initiateRetake(index);
+
+                photoContainer.appendChild(img);
+                photoContainer.appendChild(retakeBtn);
+                gallery.appendChild(photoContainer);
+            });
+        }
+        
+        async function initiateRetake(index) {
+            await initCamera(); 
+            showScreen(photoboothScreen);
+
+            photoCounterEl.textContent = `${index}/${totalPhotosInSession}`;
+            instructionEl.textContent = `Ulangi foto ke-${index + 1}...`;
+            
+            await runCountdown(3);
+            capturedPhotos[index] = captureSinglePhoto();
+            await delay(500);
+            showReviewScreen();
+        }
+        
+        function populateFrameChoices() {
+            const container = document.getElementById('frame-choices-container');
+            container.innerHTML = ''; // Clear previous choices
+            
+            const colors = [
+                { name: 'Putih Tulang', color: '#F5F5DC' },
+                { name: 'Hitam', color: '#000000' },
+                { name: 'Sage', color: '#8F9779' },
+                { name: 'Burgundy', color: '#800020' },
+                { name: 'Kuning Mario', color: '#fbd000' }
+            ];
+
+            colors.forEach(item => {
+                const choice = document.createElement('div');
+                choice.className = 'frame-choice';
+                choice.style.backgroundColor = item.color;
+                choice.dataset.color = item.color;
+                choice.title = item.name;
+                choice.onclick = () => {
+                    playCoinSound();
+                    selectedFrameColor = item.color;
+                    showScreen(resultScreen);
+                    generatePhotostripsPreview();
+                };
+                container.appendChild(choice);
+            });
+
+            const pickerLabel = document.createElement('label');
+            pickerLabel.htmlFor = 'color-picker';
+            pickerLabel.title = 'Pilih Warnamu';
+            pickerLabel.innerHTML = `
+                <div class="frame-choice flex items-center justify-center cursor-pointer" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red)">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path><path d="M12 22.31V12"></path></svg>
+                </div>
+            `;
+            const pickerInput = document.createElement('input');
+            pickerInput.type = 'color';
+            pickerInput.id = 'color-picker';
+            pickerInput.className = 'hidden';
+            pickerInput.onchange = (e) => {
+                playCoinSound();
+                selectedFrameColor = e.target.value;
+                showScreen(resultScreen);
+                generatePhotostripsPreview();
+            };
+            
+            container.appendChild(pickerLabel);
+            container.appendChild(pickerInput);
+        }
+
+        continueToFrameButton.addEventListener('click', () => {
+            populateFrameChoices();
+            showScreen(frameSelectionScreen);
+        });
+
+        // Filter selection logic
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                currentFilter = e.target.dataset.filter;
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                applyPreviewFilter(currentFilter);
+            });
+        });
+
+        function applyPreviewFilter(filter) {
+             document.querySelectorAll('.photostrip-img').forEach(img => {
+                if (filter === 'vintage') {
+                    img.style.filter = 'sepia(0.7) contrast(1.1) brightness(0.9)';
+                } else if (filter === 'bw') {
+                    img.style.filter = 'grayscale(1)';
+                } else {
+                    img.style.filter = 'none';
+                }
+             });
+        }
+        
+        function isColorDark(hex) {
+            const color = (hex.charAt(0) === '#') ? hex.substring(1, 7) : hex;
+            const r = parseInt(color.substring(0, 2), 16);
+            const g = parseInt(color.substring(2, 4), 16);
+            const b = parseInt(color.substring(4, 6), 16);
+            return (((r * 299) + (g * 587) + (b * 114)) / 1000) < 128;
+        }
+
+        // Generate the photostrips for on-screen preview
+        function generatePhotostripsPreview() {
+            const photostrip1Container = document.getElementById('photostrip1-container');
+            const photostrip2Container = document.getElementById('photostrip2-container');
+            
+            photostrip1Container.innerHTML = '';
+            photostrip2Container.innerHTML = '';
+            photostrip1Container.style.backgroundColor = selectedFrameColor;
+            photostrip2Container.style.backgroundColor = selectedFrameColor;
+
+            currentFilter = 'none';
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.filter-btn[data-filter="none"]').classList.add('active');
+
+            const strip1Photos = capturedPhotos.slice(0, 4);
+            strip1Photos.forEach(photoSrc => photostrip1Container.appendChild(createImageContainer(photoSrc)));
+            photostrip1Container.appendChild(createLogoElement());
+
+            resultLayoutContainer.classList.remove('lg:flex-row');
+
+            if (totalPhotosInSession === 8) {
+                const strip2Photos = capturedPhotos.slice(4, 8);
+                strip2Photos.forEach(photoSrc => photostrip2Container.appendChild(createImageContainer(photoSrc)));
+                photostrip2Container.appendChild(createLogoElement());
+                photostrip2Container.classList.remove('hidden');
+                downloadStrip2Button.classList.remove('hidden');
+                downloadAllButton.classList.remove('hidden');
+            } else {
+                resultLayoutContainer.classList.add('lg:flex-row');
+                photostrip2Container.classList.add('hidden');
+                downloadStrip2Button.classList.add('hidden');
+                downloadAllButton.classList.add('hidden');
+            }
+            applyPreviewFilter('none');
+        }
+        
+        function createImageContainer(src) {
+            const container = document.createElement('div');
+            container.className = 'photostrip-img-container';
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'photostrip-img';
+            container.appendChild(img);
+            return container;
+        }
+        
+        function createLogoElement() {
+            const logoContainer = document.createElement('div');
+            logoContainer.className = 'text-center py-4 strip-logo';
+            logoContainer.textContent = "Sura Sura";
+            logoContainer.style.color = isColorDark(selectedFrameColor) ? 'white' : 'black';
+            return logoContainer;
+        }
+
+        // --- Download Logic ---
+        async function createStripCanvas(photos, frameColor, filter) {
+            const DPI = 300;
+            const INCH_TO_PX = DPI;
+            const STRIP_WIDTH_IN = 2;
+            const STRIP_HEIGHT_IN = 6;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = STRIP_WIDTH_IN * INCH_TO_PX;
+            canvas.height = STRIP_HEIGHT_IN * INCH_TO_PX;
+            const ctx = canvas.getContext('2d');
+
+            const FRAME_PADDING = 0.12 * INCH_TO_PX;
+            const PHOTO_SPACING = 0.08 * INCH_TO_PX;
+
+            ctx.fillStyle = frameColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const logoSpace = 0.8 * INCH_TO_PX;
+            const totalPhotoSpace = canvas.height - (FRAME_PADDING * 2) - logoSpace - (PHOTO_SPACING * (photos.length -1));
+            const dHeight = totalPhotoSpace / photos.length;
+            const dWidth = canvas.width - (FRAME_PADDING * 2);
+            let currentY = FRAME_PADDING;
+
+            const imagePromises = photos.map(src => new Promise(res => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = src;
+                img.onload = () => res(img);
+            }));
+            const loadedImages = await Promise.all(imagePromises);
+
+            for (const img of loadedImages) {
+                const sWidth = img.width;
+                const sHeight = img.height;
+                const sRatio = sWidth / sHeight;
+                const dRatio = dWidth / dHeight;
+                let sx = 0, sy = 0, cropWidth = sWidth, cropHeight = sHeight;
+
+                if (sRatio > dRatio) { 
+                    cropWidth = sHeight * dRatio;
+                    sx = (sWidth - cropWidth) / 2;
+                } else if (sRatio < dRatio) { 
+                    cropHeight = sWidth / dRatio;
+                    sy = (sHeight - cropHeight) / 2;
+                }
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = sWidth;
+                tempCanvas.height = sHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                if (filter === 'vintage') {
+                    tempCtx.filter = 'sepia(0.7) contrast(1.1) brightness(0.9)';
+                } else if (filter === 'bw') {
+                    tempCtx.filter = 'grayscale(1)';
+                } else {
+                    tempCtx.filter = 'none';
+                }
+                tempCtx.drawImage(img, 0, 0);
+                
+                ctx.drawImage(tempCanvas, sx, sy, cropWidth, cropHeight, FRAME_PADDING, currentY, dWidth, dHeight);
+                currentY += dHeight + PHOTO_SPACING;
+            }
+
+            const logoText = "Sura Sura";
+            ctx.font = `${0.35 * INCH_TO_PX}px 'Pacifico'`;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = isColorDark(frameColor) ? 'white' : 'black';
+            ctx.shadowColor = 'rgba(0,0,0,0.2)';
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.shadowBlur = 3;
+            ctx.fillText(logoText, canvas.width / 2, canvas.height - FRAME_PADDING - (logoSpace / 4));
+
+            return canvas;
+        }
+
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        downloadStrip1Button.addEventListener('click', async () => {
+            const stripPhotos = capturedPhotos.slice(0, 4);
+            const canvas = await createStripCanvas(stripPhotos, selectedFrameColor, currentFilter);
+            downloadCanvas(canvas, 'sura-sura-strip1.png');
+        });
+        
+        downloadStrip2Button.addEventListener('click', async () => {
+            const stripPhotos = capturedPhotos.slice(4, 8);
+            const canvas = await createStripCanvas(stripPhotos, selectedFrameColor, currentFilter);
+            downloadCanvas(canvas, 'sura-sura-strip2.png');
+        });
+
+        downloadAllButton.addEventListener('click', async () => {
+            if (totalPhotosInSession !== 8) return;
+            const strip1Photos = capturedPhotos.slice(0, 4);
+            const strip2Photos = capturedPhotos.slice(4, 8);
+            
+            const canvas1 = await createStripCanvas(strip1Photos, selectedFrameColor, currentFilter);
+            const canvas2 = await createStripCanvas(strip2Photos, selectedFrameColor, currentFilter);
+
+            const combinedCanvas = document.createElement('canvas');
+            const ctx = combinedCanvas.getContext('2d');
+            const gap = 50;
+            combinedCanvas.width = canvas1.width * 2 + gap;
+            combinedCanvas.height = canvas1.height;
+            
+            ctx.fillStyle = 'rgba(255,255,255,0)';
+            ctx.fillRect(0,0, combinedCanvas.width, combinedCanvas.height);
+            ctx.drawImage(canvas1, 0, 0);
+            ctx.drawImage(canvas2, canvas1.width + gap, 0);
+
+            downloadCanvas(combinedCanvas, 'sura-sura-semua.png');
+        });
+        
+        retakeButton.addEventListener('click', () => {
+             showScreen(sessionSelectionScreen);
+        });
+
+        changeFrameButton.addEventListener('click', () => {
+            showScreen(frameSelectionScreen);
+        });
+        
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            showScreen(initialScreen);
+            animateTitle();
+        });
+        
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stopCamera();
+            }
+        });
+
+    </script>
+</body>
+</html>
