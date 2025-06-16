@@ -71,8 +71,16 @@
             box-shadow: 0 0 25px rgba(255, 255, 255, 0.5), inset 0 0 15px rgba(0,0,0,0.3);
             background-color: #000;
             max-width: 100%;
+            overflow: hidden;
         }
 
+        /* --- FIX: Aspect Ratio for Camera --- */
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* This makes the video fill the container, cropping excess */
+        }
+        
         .photostrip {
             box-shadow: 8px 8px 10px rgba(0,0,0,0.3);
             display: flex;
@@ -196,8 +204,8 @@
 
         <!-- Photobooth State -->
         <div id="photobooth-screen" class="hidden">
-            <div id="video-wrapper" class="relative inline-block video-container">
-                <video id="video" width="640" height="480" autoplay playsinline class="rounded-sm scale-x-[-1]"></video>
+            <div id="video-wrapper" class="relative inline-block video-container w-full max-w-lg aspect-[4/3]">
+                <video id="video" autoplay playsinline class="rounded-sm scale-x-[-1]"></video>
                 <div id="countdown" class="hidden"></div>
                  <div id="photo-counter" class="absolute bottom-2 right-4 text-3xl font-bold">0/0</div>
             </div>
