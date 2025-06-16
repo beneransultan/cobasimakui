@@ -74,11 +74,10 @@
             overflow: hidden;
         }
 
-        /* --- FIX: Aspect Ratio for Camera --- */
         #video {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* This makes the video fill the container, cropping excess */
+            object-fit: cover; 
         }
         
         .photostrip {
@@ -171,7 +170,6 @@
             margin: 2rem 0;
         }
         
-        /* Particle Animations */
         .particle {
             position: absolute;
             background-color: #fbd000;
@@ -605,7 +603,7 @@
             });
 
             const pickerLabel = document.createElement('label');
-            pickerLabel.htmlFor = 'color-picker';
+            pickerLabel.htmlFor = 'color-picker-input';
             pickerLabel.title = 'Pilih Warnamu';
             pickerLabel.innerHTML = `
                 <div class="frame-choice flex items-center justify-center cursor-pointer" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red)">
@@ -614,7 +612,7 @@
             `;
             const pickerInput = document.createElement('input');
             pickerInput.type = 'color';
-            pickerInput.id = 'color-picker';
+            pickerInput.id = 'color-picker-input';
             pickerInput.className = 'hidden';
             pickerInput.onchange = (e) => {
                 playCoinSound();
@@ -764,20 +762,30 @@
                 }
                 
                 const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = sWidth;
-                tempCanvas.height = sHeight;
+                tempCanvas.width = cropWidth;
+                tempCanvas.height = cropHeight;
                 const tempCtx = tempCanvas.getContext('2d');
                 
-                if (filter === 'vintage') {
-                    tempCtx.filter = 'sepia(0.7) contrast(1.1) brightness(0.9)';
-                } else if (filter === 'bw') {
-                    tempCtx.filter = 'grayscale(1)';
-                } else {
-                    tempCtx.filter = 'none';
-                }
-                tempCtx.drawImage(img, 0, 0);
+                tempCtx.drawImage(img, sx, sy, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
                 
-                ctx.drawImage(tempCanvas, sx, sy, cropWidth, cropHeight, FRAME_PADDING, currentY, dWidth, dHeight);
+                if (filter !== 'none') {
+                    const imageData = tempCtx.getImageData(0, 0, cropWidth, cropHeight);
+                    const data = imageData.data;
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i], g = data[i+1], b = data[i+2];
+                        if (filter === 'vintage') {
+                            data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
+                            data[i+1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
+                            data[i+2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+                        } else if (filter === 'bw') {
+                            const gray = r * 0.299 + g * 0.587 + b * 0.114;
+                            data[i] = data[i+1] = data[i+2] = gray;
+                        }
+                    }
+                    tempCtx.putImageData(imageData, 0, 0);
+                }
+                
+                ctx.drawImage(tempCanvas, 0, 0, cropWidth, cropHeight, FRAME_PADDING, currentY, dWidth, dHeight);
                 currentY += dHeight + PHOTO_SPACING;
             }
 
