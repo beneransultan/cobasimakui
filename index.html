@@ -584,7 +584,7 @@
                 const retakeBtn = document.createElement('button');
                 retakeBtn.textContent = 'Ulangi';
                 retakeBtn.className = 'absolute bottom-2 left-1/2 -translate-x-1/2 mario-button text-xs px-3 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity';
-                retakeBtn.onclick = () => initiateRetake(index);
+                retakeBtn.dataset.retakeIndex = index;
 
                 photoContainer.appendChild(img);
                 photoContainer.appendChild(retakeBtn);
@@ -604,6 +604,14 @@
             await delay(500);
             showReviewScreen();
         }
+
+        document.getElementById('review-gallery').addEventListener('click', (e) => {
+            const button = e.target.closest('[data-retake-index]');
+            if (button) {
+                const retakeIndex = button.dataset.retakeIndex;
+                initiateRetake(parseInt(retakeIndex, 10));
+            }
+        });
         
         function populateFrameChoices() {
             const container = document.getElementById('frame-choices-container');
